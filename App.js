@@ -15,6 +15,7 @@ export default function App() {
     const product = getProduct(id);
     console.log(product.name)
     setItensCarrinho((prevItems) => {
+      console.log(itensCarrinho.length)
       const item = prevItems.find((item) => item.id == id);
       if (!item) {
         return [
