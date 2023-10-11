@@ -1,16 +1,18 @@
-import { StyleSheet, Text, View, TextInput, Pressable } from "react-native";
+import { StyleSheet, Text, View, TextInput, Pressable, FlatList, TouchableOpacity } from "react-native";
 import { useState, useEffect } from "react";
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const DetailsScreen = () => {
+
+const DetailsScreen = ({ navigation }) => {
 
 
   const [nome, setNome] = useState('');
   const [valor, setValor] = useState(0);
-  const [id, setId] = useState('');
-  const [valorLance, setValorLance] = useState(0);
-  const [teste2, teste] = useState([]);
+  const [data, setData] = useState([]);
 
-
+  useEffect(() => {
+    getLeilao();
+  }, []);
 
 
   const onChangeNome = (nome) => {
@@ -19,8 +21,18 @@ const DetailsScreen = () => {
   const onChangeValor = (valor) => {
     setValor(valor);
   }
+  const getLeilao = () => {
+    fetch('https://leilao-rest-api.herokuapp.com/itemdeleilao/')
+      .then((resp) => resp.json())
+      .then((json) => {
+        setData((json))
+      })
+      .catch((error) => console.error(error))
+      .finally();
+  }
   const sendLeilao = () => {
     if (nome || valor) {
+
       fetch('https://leilao-rest-api.herokuapp.com/itemdeleilao/', {
         method: 'POST',
         headers: {
@@ -34,6 +46,7 @@ const DetailsScreen = () => {
         }),
       })
         .then((response) => {
+          getLeilao();
           setNome('');
           setValor(0);
         })
@@ -45,41 +58,21 @@ const DetailsScreen = () => {
         });
     }
   }
-  const onChangeId = (id)=>{
-    setId(id)
-  }
-  const serachLeilao = ()=>{
-    fetch(`https://leilao-rest-api.herokuapp.com/itemdeleilao/${id}`)
-    .then((resp) => resp.json())
-    .then((json) => {
-      if(json.leilaoAberto){
-        fetch(`https://leilao-rest-api.herokuapp.com/lance/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            valor: valorLance,
-            arrematante:{
-              id:id,
-              nome:json.nome,
-              cpf:json.cpf
-            }
-          }),
-        })
-          .catch((error) => {
-            alert(error);
-          })
-          .finally();
-      }
-      teste(json)
+  const deleteLeilao = (id) => {
+    fetch(`https://leilao-rest-api.herokuapp.com/itemdeleilao/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
     })
-    .catch((error) => console.error(error))
-    .finally();
+      .then((response) => {
+        // getLeilao();
+
+      })
   }
-  const onChangeValorLance = (valor)=>{
-    setValorLance(valor)
+  const screenSearchLeilao = () => {
+    navigation.navigate('BagItens')
   }
   return (
     <View style={styles.form}>
@@ -96,21 +89,37 @@ const DetailsScreen = () => {
       >
         <Text style={styles.textStyle}>Registrar leilão</Text>
       </Pressable>
-      <View style={styles.form}>
-        <Text style={styles.titulo}>Buscar Leilão</Text>
-        <View>
-          <Text style={styles.labels}>Id do Item:</Text>
-          <TextInput style={styles.inputs} onChangeText={onChangeId}></TextInput>
-          <Text style={styles.labels}>Valor do lance:</Text>
-          <TextInput style={styles.inputs} keyboardType="numeric" onChangeText={onChangeValorLance}></TextInput>
-        </View>
-        <Pressable
-          style={styles.button}
-          onPress={sendLeilao}
-        >
-          <Text style={styles.textStyle} onPress={serachLeilao}>Enviar lance</Text>
-        </Pressable> 
-      </View>
+      <Pressable
+        style={styles.button}
+        onPress={screenSearchLeilao}
+      >
+        <Text style={styles.textStyle}>Buscar leilão</Text>
+      </Pressable>
+      <FlatList
+        data={data}
+        style={{ margin: 12 }}
+        renderItem={({ item }) => {
+          return (
+            <View style={styles.item}>
+              <View
+                style={styles.usersRender}>
+                <Text style={styles.nome}>{item.nome}</Text>
+                <Text>{item.valorMinimo}</Text>
+                <Pressable
+                  onPress={deleteLeilao(item.id)}
+
+                >
+                  <MaterialCommunityIcons
+                    name="close"
+                    color={'red'}
+                  />
+                </Pressable >
+
+              </View>
+            </View>
+          );
+        }}
+      />
     </View>
   );
 };
@@ -154,7 +163,9 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     width: 300,
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
+    paddingLeft: 30,
+    paddingRight: 30,
     borderWidth: 1,
     padding: 5,
 

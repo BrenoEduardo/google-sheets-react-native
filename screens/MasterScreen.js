@@ -5,14 +5,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import DetailsScreen from './DetailsScreen'
 
 
-const MasterScreen = ({navigate})  => {
+const MasterScreen = ({navigation})  => {
 
   useEffect(() => {
-    fetch('https://leilao-rest-api.herokuapp.com/participante/')
-      .then((resp) => resp.json())
-      .then((json) => setData(json))
-      .catch((error) => console.error(error))
-      .finally();
+    getUser();
   }, []);
 
   const [nome, setNome] = useState('');
@@ -25,6 +21,13 @@ const MasterScreen = ({navigate})  => {
   }
   const onChangeCpf = (cpf) => {
     setCpf(cpf)
+  }
+  const getUser = () => {
+    fetch('https://leilao-rest-api.herokuapp.com/participante/')
+    .then((resp) => resp.json())
+    .then((json) => setData(json))
+    .catch((error) => console.error(error))
+    .finally();
   }
   const sendUser = () => {
     if (nome || cpf) {
@@ -39,11 +42,19 @@ const MasterScreen = ({navigate})  => {
           cpf: cpf,
         }),
       })
+      .then(response => {
+        setNome('');
+        setCpf('');
+        getUser();
+      })
         .catch((error) => {
           alert(error);
         })
         .finally();
     }
+  }
+  const screenRegisterLeilao = ()=>{
+    navigation.navigate('DetailsScreen')
   }
   return (
         <View style={styles.form}>
@@ -58,6 +69,11 @@ const MasterScreen = ({navigate})  => {
             style={styles.button}
             onPress={sendUser}>
             <Text style={styles.textStyle}>Enviar</Text>
+          </Pressable>
+          <Pressable
+            style={styles.button}
+            onPress={screenRegisterLeilao}>
+            <Text style={styles.textStyle}>Ir para registrar leilão</Text>
           </Pressable>
           <FlatList
             data={data}
